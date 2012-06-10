@@ -2,12 +2,12 @@
 
 print "Whee."
 
-import io
+#import io
 import os.path
 import sys
 import string
 import colorama
-from colorama import Fore, Back, Style
+#from colorama import Fore  # , Back  # , Style
 colorama.init()
 from termcolor import colored
 
@@ -34,20 +34,19 @@ for line in text:
             color = None
             style = None
             if status == '-':
-                color = 'yellow'; style=['bold']
+                color = 'yellow'
+                style = ['bold']
             elif status == 'x':
-                color = 'grey'; style=None
+                color = 'grey'
+                style = None
 
             if color:
                 sys.stdout.write(colored(line, color, attrs=style))
             else:
                 sys.stdout.write(line)
-        
-        
 
 
 if __name__ == "__main__":
 
     print 'main here.'
     print days
-    
