@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-print "Whee."
+#
+# The idea is to sweep all the unfinished tasks in the list to the
+# current day.  This particular program is obsolete (see todo-merge.py
+# instead), but I'm leaving it here for history and because I'll
+# probably poach the color scheme, which I like.
+#
 
-#import io
 import os.path
 import sys
 import string
-import colorama
-#from colorama import Fore  # , Back  # , Style
-colorama.init()
 from termcolor import colored
 
 filename = os.path.expanduser("~/txt/todo/today.txt")
