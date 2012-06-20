@@ -2,4 +2,4 @@ test:
 	./runme.sh
 
 clean:
-	rm *~
+	rm *~ *#

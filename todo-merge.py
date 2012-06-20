@@ -4,39 +4,16 @@
 #  Merge multiple todo.txt style files
 #
 
-key =\
-"""
-Key
------------------
-- to do
-x done
-> brought forward
-/ worked on but not done
-. not gonna do (in this form, anyway)
-"""
-
-#import io
 import os.path
 import string
-
+from operator import itemgetter, attrgetter
 from datetime import datetime, timedelta
-
-from logging import basicConfig, debug, WARNING
-#from logging import basicConfig, debug, WARNING
-basicConfig(level=WARNING, format='%(message)s')
+import logging
+from logging import basicConfig, CRITICAL, ERROR, warn, WARNING,\
+                                 info, INFO, debug, DEBUG
+basicConfig(level=INFO, format='%(message)s')
 
 from g_utils import colorz, YELLOW, WHITE, RED, BRIGHT, GREEN, GREY50
-
-
-files_to_merge = ["~/txt/todo/today.txt", "~/txt/todo/today-glance3.txt"]
-
-
-class Task(object):
-
-    def __init__(self):
-        self.datetime = None
-        self.text = ''
-        self.lineNumber = 0
 
 
 def uniq(aList):
@@ -45,7 +22,7 @@ def uniq(aList):
         if not item in result:
             result.append(item)
         else:
-            debug("Uniq'ed out %s" % str(item))
+            pass  #debug("Uniq'ed out %s" % str(item.__dict__))
     return result
 
 
@@ -77,7 +54,7 @@ def datetimeFromString(s):
 
 
 def reasonableDateString(dt):
-    """Return the simplest, most human-readable date-time we can.
+    """Return the clearest, most human-readable date-time we can.
     For example, if the date/time was "yesterday at 4pm," say that instead of
     "2012-09-11 16:00:00pm"
     """
@@ -92,11 +69,11 @@ def reasonableDateString(dt):
             minutes = (delta.seconds - hours * 3600) / 60
             plural = 's' if minutes != 1 else ''
             rs += " {} minute{}".format(minutes, plural)
-        rs += " ago"
+        rs += dt.strftime(" ago (%I:%M %p)")
     elif delta.days < 2:
-        rs = dt.strftime("yesterday at %I:%02M %p")
+        rs = dt.strftime("yesterday at %I:%M %p")
     elif delta.days < 7:
-        rs = dt.strftime("last %A at %I:%02M %p")
+        rs = dt.strftime("last %A at %I:%M %p")
     else:
         yearstr = "%Y " if dt.year != now.year else ""
         rs = dt.strftime("%d %b {}%I:%M %p".format(yearstr)).strip('0')
@@ -104,10 +81,104 @@ def reasonableDateString(dt):
     return rs
 
 
+def fixedDateString(dt):
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+key =\
+"""
+----------<snip>-----------
+
+Key
+-----------------
+- to do
+x done
+> brought forward
+/ worked on but not done
+. not gonna do (in this form, anyway)
+"""
+statusDict = {
+    '' : 0,  #  '',
+    '-': 1,  #  'to do',
+    '>': 2,  #  'forwarded',
+    '/': 3,  #  'worked on & forwarded',
+    '.': 4,  #  'no',
+    'x': 5   #  'done'
+}
+
+class Task(object):
+
+    def __init__(self, newDateTime=None, newLineNumber=0, newText='', newStatus=''):
+        self.dateTime = newDateTime
+        self.lineNumber = newLineNumber
+        self.status = newStatus
+
+        # Throw away whitespace and newlines at end of all lines
+        newText = newText.rstrip(' \t\r\n')
+        self.text = newText
+
+        # If there's still something left of the text, maybe there's a status
+        if len(newText) > 0:
+            potentialStatus = newText.lstrip(' \t')[0]  # first nonspace char
+            if potentialStatus in statusDict.keys():
+                # Line started with a status, don't include status or
+                # whitespace in text
+                self.status = potentialStatus
+                # Save text without status, but don't lose indentation
+                self.text = newText.replace(self.status, '', 1)
+
+
+    def __eq__(self, other):
+        return self.dateTime == other.dateTime and self.text == other.text \
+               and self.status == other.status
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        return self.dateTime < other.dateTime or \
+            (self.dateTime == other.dateTime and \
+             self.lineNumber < other.lineNumber)
+
+    def __le__(self, other):
+        return self.__le__(other) or self.__eq__(other)
+    
+    def __gt__(self, other):
+        return self.dateTime > other.dateTime or \
+            (self.dateTime == other.dateTime and \
+             self.lineNumber > other.lineNumber)
+    
+    def __ge__(self, other):
+        return self.__gt__(other) or self.__eq__(other)
+    
+    def string(self, withDate=True, fixedDate=False, withStatus=True,
+               withLineNumber=False, color=False):
+        firstPart = ''
+        if color:
+            colrz = colorz
+        else:
+            colrz = lambda string, color: string
+        if withDate:
+            if fixedDate:
+                dateStrFn = fixedDateString
+            else:
+                dateStrFn = reasonableDateString
+            firstPart = colrz(dateStrFn(self.dateTime), GREEN) + ' '
+        if withLineNumber:
+            firstPart += colrz(str(self.lineNumber), GREY50) + ' '
+
+        if withStatus:
+            status = self.status
+        else:
+            status = ''
+
+        return firstPart + status + colrz(''.join(self.text), WHITE)
+
+
 def parse_one_todo_file(filename):
-    """Given a filename, returns a corresponding list of chunks"""
+    """Given a filename, returns a corresponding list of (not uniqued) tasks"""
     usable_filename = os.path.expanduser(filename)
-    chunks = []
+    taskList = []
 
     text = open(usable_filename, "r").readlines()
 
@@ -116,7 +187,6 @@ def parse_one_todo_file(filename):
     # have a date on the next line, new ones with the date on the same
     # line
 
-    paragraph = []  # Paragraph is a list of date and lines tuples (today)
     max_date_str = "14 June 2063 23:59:59"
     debug("max_date_str = %s", max_date_str)
 
@@ -132,12 +202,7 @@ def parse_one_todo_file(filename):
 
         # '-----' starts a new chunk
         if text[i].startswith('-----'):
-            # Finish up the previous chunk
-            if len(paragraph) > 0:
-                chunks.append((last_date_found, paragraph))
-
-            # Start a new chunk
-            paragraph = []
+            # Start a new dated chunk
             lineNumber = 0
             s = text[i].strip('- \t\n\r')
             trial_date = datetimeFromString(s)
@@ -157,63 +222,108 @@ def parse_one_todo_file(filename):
                     debug("Using prior last_date_found - 1 min = %s" %\
                           str(last_date_found))
             else:  # trial_date already validly set, normal body line
-                paragraph.append((trial_date, lineNumber, text[i].rstrip()))
+                task = Task(last_date_found, lineNumber, text[i])
+                taskList.append(task)
                 lineNumber -= 1
 
         if string.count(text[i], '<snip>'):
             debug("<snip> Done.")
             break
 
-    for paragraph in chunks:
-        debug(colorz(reasonableDateString(paragraph[0]), YELLOW))
-        debug(colorz(''.join(repr(paragraph[1])), RED))
-    debug("\n\n")
+    return taskList
 
-    return chunks
-
-
-def string_tasktuple(task, withDate=False, withLineNumber=False):
-    debug(colorz(task, BRIGHT))
-
-    firstPart = ''
-    if withDate:
-        firstPart = colorz(reasonableDateString(task[0]), GREEN) + ' '
-    if withLineNumber:
-        firstPart += colorz(str(task[1]), GREY50) + ' '
-
-    return firstPart + colorz(''.join(task[2]), WHITE)
 
 
 def merge(files_to_merge):
-    "Iterate over files_to_merge, parsing into chunks, merging, sorting, uniquing"
-    theList = []
+    "Iterate over files_to_merge, parsing days, merging, sorting, uniquing"
+    debug(files_to_merge)
+    combinedList = []
     for filename in files_to_merge:
-        theList += parse_one_todo_file(filename)
+        combinedList += parse_one_todo_file(filename)
 
     # sort the list
-    sList = sorted(theList, reverse=True)
+    sortedTasks = sorted(combinedList, reverse=True)
 
     # Uniq it
-    uList = uniq(sList)
-
-    # Iterate over the chunks and accumulate a new, flat, task-level list
-    flatList = []
-    #taskDict = dict()
-    for paragraph in uList:
-        for task in paragraph[1]:
-            debug(string_tasktuple(task))
-            flatList.append(task)
-
-    sortedTasks = sorted(flatList, reverse=True)
-
+    #uniqueTasks = uniq(sortedTasks)
     uniqueTasks = uniq(sortedTasks)
 
-    # Now print them out (print a date on only the tasks from line 0)
+    # Now, for tasks that are the same except for their status,
+    # eliminate the less done version.
+
+    # Put them in a dictionary indexed by dateTime + text
+    taskDict = {}
+    cleanedUpTasks = []
     for task in uniqueTasks:
-        if task[1] == 0:
-            print string_tasktuple(task, withDate=True)
+        key = task.string(fixedDate=True, withStatus=False)
+
+        # If task (except status) is already in dictionary, keep most
+        # finished state.
+
+        if key in taskDict.keys():
+            oldTask = taskDict[key]
+            debug("Whoa, %s already in taskDict at %s" % (key, oldTask))
+            debug("Old status is %s" % oldTask.status)
+            debug("New status is %s" % task.status)
+            # If the new one is closer to done, replace the more done one
+            if statusDict[oldTask.status] < statusDict[task.status]:
+                taskDict[key] = task
         else:
-            print string_tasktuple(task)
+            taskDict[key] = task
+
+        taskList = []
+        for task in taskDict.values():
+            taskList.append(task)
+
+        sortedTasks = sorted(taskList, reverse=True)
+        uniqueTasks = uniq(sortedTasks)
+
+    # Now print latest version of tasks (print a date on only the
+    # tasks from line 0)
+
+    for task in uniqueTasks:
+        if task.lineNumber == 0:
+            print("")
+            print(task.string(color=True))
+        else:
+            print(task.string(withDate=False, color=True))
+
 
 if __name__ == "__main__":
-    merge(files_to_merge)
+    import argparse
+
+    files_to_merge = ["~/txt/todo/today.txt", "~/txt/todo/today-glance3.txt"]
+
+    parser = argparse.ArgumentParser(description='Merge some todo.txt files')
+
+    parser.add_argument('-d', '--directory', default='~/txt/todo')
+    parser.add_argument('-v', '--verbose', type=int, default=1)
+    parser.add_argument('-D', '--done-file', default='~/txt/todo/done.txt')
+    parser.add_argument('filenames', nargs='?', default=files_to_merge,
+                        help='todo.txt files to merge')
+
+    # The object you get back from parse_args() is a 'Namespace'
+    # object: An object whose member variables are named after your
+    # command-line arguments. The Namespace object is how you access
+    # your arguments and the values associated with them:
+
+    args = parser.parse_args()
+    if len(args.filenames) < 2:
+        print "Need two (or more) files to merge."
+        parser.print_help()
+        sys.exit(1)
+
+    verbosity = (CRITICAL, ERROR, WARNING, INFO, DEBUG)
+    v = args.verbose
+    f = '%(message)s'
+    if 0 <= v <= 4:
+        basicConfig(level=verbosity[v], format=f)
+    else:
+        print "Verbosity should be between 0 and 4, inclusive"
+        parser.print_help()
+        sys.exit(1)
+
+    debug(args.verbose)
+    debug(verbosity[args.verbose])
+
+    merge(args.filenames)
