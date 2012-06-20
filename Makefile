@@ -1,5 +1,6 @@
 test:
-	./runme.sh
+	./todo.py
+#	./runme.sh
 
 clean:
 	rm *~ *#
