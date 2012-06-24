@@ -143,9 +143,9 @@ class Task(object):
         return self.__gt__(other) or self.__eq__(other)
 
     def string(self, withDate=True, fixedDate=False, withStatus=True,
-               withLineNumber=False, color=False):
+               withLineNumber=False, useColor=False):
         firstPart = ''
-        if color:
+        if useColor:
             colrz = colorz
         else:
             colrz = lambda string, color: string

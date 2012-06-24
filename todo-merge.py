@@ -54,9 +54,9 @@ def merge(filenames):
 
     for task in sortedTasks:
         if task.lineNumber == 0:
-            print "\n%s" % task.string(color=True)
+            print "\n%s" % task.string(useColor=True)
         else:
-            print task.string(withDate=False, color=True)
+            print task.string(withDate=False, useColor=True)
 
 
 if __name__ == "__main__":
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if len(args.filenames) < 2:
         print "Need two (or more) files to merge."
-        print "%s contains: %s" % args.directory, 
+        print "%s contains: %s" % args.directory, lsdir(args.directory)
         parser.print_help()
         sys.exit(1)
 

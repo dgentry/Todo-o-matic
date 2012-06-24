@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from xtermcolor.ColorMap import XTermColorMap  # , VT100ColorMap
-colorz = XTermColorMap().colorize
+colorize = XTermColorMap().colorize
 GREEN = 0x08dd08
 AQUA = 0x00ffec
 YELLOW = 0xFCD116
@@ -28,3 +28,13 @@ def use_color(stream):
     except:
         # guess false in case of error
         return False
+
+
+import sys
+
+
+def colorz(string, color):
+    if use_color(sys.stdout):
+        return colorize(string, color)
+    else:
+        return string
