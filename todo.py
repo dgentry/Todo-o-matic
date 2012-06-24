@@ -7,9 +7,9 @@
 
 import os.path
 import string
-from operator import itemgetter, attrgetter
+
 from datetime import datetime, timedelta
-import logging
+
 from logging import basicConfig, CRITICAL, ERROR, warn, WARNING,\
                                  info, INFO, debug, DEBUG
 basicConfig(level=INFO, format='%(message)s')
@@ -89,13 +89,14 @@ x done
 . not gonna do (in this form, anyway)
 """
 statusDict = {
-    '' : 0,  #  '',
-    '-': 1,  #  'to do',
-    '>': 2,  #  'forwarded',
-    '/': 3,  #  'worked on & forwarded',
-    '.': 4,  #  'no',
-    'x': 5   #  'done'
+    '': 0,   # '',
+    '-': 1,  # 'to do',
+    '>': 2,  # 'forwarded',
+    '/': 3,  # 'worked on & forwarded',
+    '.': 4,  # 'no',
+    'x': 5   # 'done'
 }
+
 
 class Task(object):
 
@@ -118,7 +119,6 @@ class Task(object):
                 # Save text without status, but don't lose indentation
                 self.text = newText.replace(self.status, '', 1)
 
-
     def __eq__(self, other):
         return self.dateTime == other.dateTime and self.text == other.text \
                and self.status == other.status
@@ -133,15 +133,15 @@ class Task(object):
 
     def __le__(self, other):
         return self.__le__(other) or self.__eq__(other)
-    
+
     def __gt__(self, other):
         return self.dateTime > other.dateTime or \
             (self.dateTime == other.dateTime and \
              self.lineNumber > other.lineNumber)
-    
+
     def __ge__(self, other):
         return self.__gt__(other) or self.__eq__(other)
-    
+
     def string(self, withDate=True, fixedDate=False, withStatus=True,
                withLineNumber=False, color=False):
         firstPart = ''

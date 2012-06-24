@@ -20,3 +20,8 @@ returned to the original and worked there too, and
 
 2) sweeping completed tasks into a "done.txt" and forwarding older
 unfinished tasks to today.
+
+Usage:  
+  todo-merge [--no-color] <file1> <file2>
+
+  todo-sweep <todo-file> [<done-file>]

@@ -68,7 +68,6 @@ if __name__ == "__main__":
 
     parser.add_argument('-d', '--directory', default='~/txt/todo')
     parser.add_argument('-v', '--verbose', type=int, default=1)
-    parser.add_argument('-D', '--done-file', default='~/txt/todo/done.txt')
     parser.add_argument('filenames', nargs='?', default=files_to_merge,
                         help='todo.txt files to merge')
 
@@ -80,6 +79,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if len(args.filenames) < 2:
         print "Need two (or more) files to merge."
+        print "%s contains: %s" % args.directory, 
         parser.print_help()
         sys.exit(1)
 
