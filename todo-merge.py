@@ -7,6 +7,7 @@
 import sys  # for sys.exit()
 from logging import basicConfig, CRITICAL, ERROR, WARNING,\
                                  INFO, debug, DEBUG
+basicConfig(level=DEBUG, format='%(message)s')
 
 from todo import statusDict, parseTodoFile
 
@@ -54,21 +55,43 @@ def merge(filenames):
 
     for task in sortedTasks:
         if task.lineNumber == 0:
-            print "\n%s" % task.string(useColor=True)
+            print "\n-----  %s" % task.string(useColor=True)
         else:
             print task.string(withDate=False, useColor=True)
+
+
+def filesFromDirsAndNames(directory, names):
+    """If dir is specified, look for files there.  If not, look in .
+    Return list of filenames that existed to merge."""
+    import os
+    directory = os.path.expanduser(directory)
+    result = []
+    for name in names:
+        name = os.path.expanduser(name)
+        if directory:
+            longname = "%s/%s" % (directory.rstrip('/'), name)
+            debug("Trying %s" % longname)
+            if os.path.isfile(longname):
+                result.append(longname)
+                debug("Worked")
+        else:
+            if os.path.isfile(name):
+                result.append(name)
+                debug("Plain filename worked.")
+
+    return result
 
 
 if __name__ == "__main__":
     import argparse
 
-    files_to_merge = ["~/txt/todo/today.txt", "~/txt/todo/today-glance3.txt"]
+    files_to_merge = ["today.txt", "~/txt/todo/today-glance3.txt"]
 
     parser = argparse.ArgumentParser(description='Merge some todo.txt files')
 
-    parser.add_argument('-d', '--directory', default='~/txt/todo')
+    parser.add_argument('-d', '--dir', '--directory', default="~/txt/todo")
     parser.add_argument('-v', '--verbose', type=int, default=1)
-    parser.add_argument('filenames', nargs='?', default=files_to_merge,
+    parser.add_argument('files', nargs='?', default=files_to_merge,
                         help='todo.txt files to merge')
 
     # The object you get back from parse_args() is a 'Namespace'
@@ -77,24 +100,23 @@ if __name__ == "__main__":
     # your arguments and the values associated with them:
 
     args = parser.parse_args()
-    if len(args.filenames) < 2:
-        print "Need two (or more) files to merge."
-        print "%s contains: %s" % args.directory, lsdir(args.directory)
-        parser.print_help()
-        sys.exit(1)
 
     verbosity = (CRITICAL, ERROR, WARNING, INFO, DEBUG)
     v = args.verbose
     f = '%(message)s'
     if 0 <= v <= 4:
         # FIXME:  basicConfig only works once -- need to make a logger, etc.
-        basicConfig(level=verbosity[v], format=f)
+        pass
     else:
         print "Verbosity should be between 0 and 4, inclusive"
         parser.print_help()
         sys.exit(1)
 
-    debug(args.verbose)
-    debug(verbosity[args.verbose])
+    debug("Verbose = %s", args.verbose)
+    debug("Verbosity = %s", verbosity[args.verbose])
 
-    merge(args.filenames)
+    debug("Dir = %s" % args.dir)
+    debug("Filename list = %s" % args.files)
+
+    fileList = filesFromDirsAndNames(args.dir, args.files)
+    merge(fileList)
