@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 from logging import basicConfig, CRITICAL, ERROR, warn, WARNING,\
                                  info, INFO, debug, DEBUG
-basicConfig(level=INFO, format='%(message)s')
+basicConfig(level=DEBUG, format='%(message)s')
 
 from gcolors import colorz, WHITE, GREEN, GREY50
 
@@ -67,7 +67,7 @@ def reasonableDateString(dt):
         rs = dt.strftime("last %A at %I:%M %p")
     else:
         yearstr = "%Y " if dt.year != now.year else ""
-        rs = dt.strftime("%d %b {}%I:%M %p".format(yearstr)).strip('0')
+        rs = dt.strftime("%d %B {}%I:%M:%S %p".format(yearstr)).strip('0')
 
     return rs
 
@@ -76,12 +76,13 @@ def fixedDateString(dt):
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
-key =\
-"""
-----------<snip>-----------
+statuskeyhelp =\
+"""---------- <snip> -----------
 
 Key
+
 -----------------
+
 - to do
 x done
 > brought forward
@@ -110,7 +111,7 @@ class Task(object):
         self.text = newText
 
         # If there's still something left of the text, maybe there's a status
-        if len(newText) > 0:
+        try:
             potentialStatus = newText.lstrip(' \t')[0]  # first nonspace char
             if potentialStatus in statusDict.keys():
                 # Line started with a status, don't include status or
@@ -118,7 +119,13 @@ class Task(object):
                 self.status = potentialStatus
                 # Save text without status, but don't lose indentation
                 self.text = newText.replace(self.status, '', 1)
+        except:
+            pass
+        debug("New Task %s", self.string(withLineNumber=True, useColor=True))
 
+    #
+    # If we define a total ordering on Tasks, we get sorting "for free"
+    #
     def __eq__(self, other):
         return self.dateTime == other.dateTime and self.text == other.text \
                and self.status == other.status
@@ -163,7 +170,14 @@ class Task(object):
         else:
             status = ''
 
-        return firstPart + status + colrz(''.join(self.text), WHITE)
+        textonly = self.text.lstrip()
+        indent = len(self.text) - len(textonly)
+
+        #return "%s%s%s $s" % (firstPart, ' ' * indent, status,
+        #                      colrz(''.join(textonly), WHITE))
+        r = firstPart + ' ' * indent + status + ' ' + \
+                              colrz(''.join(textonly), WHITE)
+        return r
 
 
 def parseTodoFile(filename):
@@ -210,10 +224,14 @@ def parseTodoFile(filename):
                     #debug("Second line date = %s" % str(trial_date))
                 else:
                     last_date_found = last_date_found - timedelta(minutes=1)
+                    trial_date = last_date_found
                     debug("Using prior last_date_found - 1 min = %s" %\
                           str(last_date_found))
+                    task = Task(last_date_found, lineNumber, str(last_date_found))
+                    taskList.append(task)
+                    lineNumber -= 1
             else:  # trial_date already validly set, normal body line
-                task = Task(last_date_found, lineNumber, text[i])
+                task = Task(last_date_found, lineNumber, newText=text[i])
                 taskList.append(task)
                 lineNumber -= 1
 

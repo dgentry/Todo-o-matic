@@ -9,7 +9,7 @@ from logging import basicConfig, CRITICAL, ERROR, WARNING,\
                                  INFO, debug, DEBUG
 basicConfig(level=DEBUG, format='%(message)s')
 
-from todo import statusDict, parseTodoFile
+from todo import statusDict, parseTodoFile, statuskeyhelp
 
 
 def merge(filenames):
@@ -22,10 +22,12 @@ def merge(filenames):
 
     # For tasks that are the same except for their status,
     # eliminate the less done version.
+    import ipdb
+    ipdb.set_trace()
     taskDict = {}
     for task in combinedList:
         # Put task in a dictionary indexed by dateTime + text
-        key = task.string(fixedDate=True, withStatus=False)
+        key = task.string(withLineNumber=True, fixedDate=True, withStatus=False)
 
         if key in taskDict.keys():
             # Task is already in dictionary so keep only the task with
@@ -55,9 +57,12 @@ def merge(filenames):
 
     for task in sortedTasks:
         if task.lineNumber == 0:
-            print "\n-----  %s" % task.string(useColor=True)
+            print "-----  %s\n" % task.string(useColor=True)
         else:
             print task.string(withDate=False, useColor=True)
+
+    # And finally the key
+    print statuskeyhelp,
 
 
 def filesFromDirsAndNames(directory, names):
