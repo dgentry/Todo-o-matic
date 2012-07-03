@@ -7,7 +7,7 @@
 import sys  # for sys.exit()
 from logging import basicConfig, CRITICAL, ERROR, WARNING,\
                                  INFO, debug, DEBUG
-basicConfig(level=DEBUG, format='%(message)s')
+basicConfig(level=INFO, format='%(message)s')
 
 from todo import statusDict, parseTodoFile, statuskeyhelp
 
@@ -22,8 +22,6 @@ def merge(filenames):
 
     # For tasks that are the same except for their status,
     # eliminate the less done version.
-    import ipdb
-    ipdb.set_trace()
     taskDict = {}
     for task in combinedList:
         # Put task in a dictionary indexed by dateTime + text
@@ -96,6 +94,7 @@ if __name__ == "__main__":
 
     parser.add_argument('-d', '--dir', '--directory', default="~/txt/todo")
     parser.add_argument('-v', '--verbose', type=int, default=1)
+    parser.add_argument('-n', '-nocolor', type=bool, default=False)
     parser.add_argument('files', nargs='?', default=files_to_merge,
                         help='todo.txt files to merge')
 
