@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 from logging import basicConfig, CRITICAL, ERROR, warn, WARNING,\
                                  info, INFO, debug, DEBUG
-basicConfig(level=DEBUG, format='%(message)s')
+basicConfig(level=INFO, format='%(message)s')
 
 from gcolors import colorz, WHITE, GREEN, GREY50
 
