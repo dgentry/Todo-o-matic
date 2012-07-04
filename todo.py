@@ -10,8 +10,7 @@ import string
 
 from datetime import datetime, timedelta
 
-from logging import basicConfig, CRITICAL, ERROR, warn, WARNING,\
-                                 info, INFO, debug, DEBUG
+from logging import basicConfig, INFO, debug
 basicConfig(level=INFO, format='%(message)s')
 
 from gcolors import colorz, WHITE, GREEN, GREY50
@@ -76,10 +75,10 @@ def fixedDateString(dt):
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
-statuskeyhelp =\
+statusLegend =\
 """---------- <snip> -----------
 
-Key
+Legend
 
 -----------------
 
@@ -97,6 +96,8 @@ statusDict = {
     '.': 4,  # 'no',
     'x': 5   # 'done'
 }
+
+doneStatuses = '.x'
 
 
 class Task(object):
