@@ -82,7 +82,7 @@ def sweep(fromFile, toFile):
             doneList.append(task)
 
     # Now merge the donefile, since it is probably somewhat messed up.
-    merge(toFile)
+    merge([toFile])
 
 
 def filesFromDirsAndNames(directory, names):
