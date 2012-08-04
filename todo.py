@@ -198,6 +198,8 @@ def parseTodoFile(filename):
 
     # Start at newest (im)possible date
     last_date_found = datetimeFromString(max_date_str)
+    trial_date = None
+    lineNumber = 0
     debug("last date = %s", str(last_date_found))
 
     #
