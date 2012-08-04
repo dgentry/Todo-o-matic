@@ -12,6 +12,20 @@ basicConfig(level=INFO, format='%(message)s')
 from todo import statusDict, parseTodoFile, statusLegend
 
 
+def printTasks(taskList, colorize=True):
+    # Now print latest version of tasks (print a date on only the
+    # tasks from line 0)
+
+    for task in taskList:
+        if task.lineNumber == 0:
+            print "-----  %s\n" % task.string(useColor=colorize)
+        else:
+            print task.string(withDate=False, useColor=colorize)
+
+    # And finally the key
+    print statusLegend,
+
+
 def merge(filenames):
     "Iterate over files, parsing days, merging, sorting, uniquing"
 
@@ -51,17 +65,7 @@ def merge(filenames):
     # Sort them for printing
     sortedTasks = sorted(taskList, reverse=True)
 
-    # Now print latest version of tasks (print a date on only the
-    # tasks from line 0)
-
-    for task in sortedTasks:
-        if task.lineNumber == 0:
-            print "-----  %s\n" % task.string(useColor=True)
-        else:
-            print task.string(withDate=False, useColor=True)
-
-    # And finally the key
-    print statusLegend,
+    return sortedTasks
 
 
 def filesFromDirsAndNames(directory, names):
@@ -95,7 +99,7 @@ if __name__ == "__main__":
 
     parser.add_argument('-d', '--dir', '--directory', default="~/txt/todo")
     parser.add_argument('-v', '--verbose', type=int, default=1)
-    parser.add_argument('-n', '-nocolor', type=bool, default=False)
+    parser.add_argument('-n', '--nocolor', action='store_true')
     parser.add_argument('files', nargs='?', default=files_to_merge,
                         help='todo.txt files to merge')
 
@@ -124,4 +128,8 @@ if __name__ == "__main__":
     debug("Filename list = %s" % args.files)
 
     fileList = filesFromDirsAndNames(args.dir, args.files)
-    merge(fileList)
+    tasks = merge(fileList)
+
+    useColor = not args.nocolor
+
+    printTasks(tasks, useColor)
