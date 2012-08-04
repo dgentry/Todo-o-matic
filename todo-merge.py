@@ -9,12 +9,13 @@ from logging import basicConfig, CRITICAL, ERROR, WARNING,\
                                  INFO, debug, DEBUG
 basicConfig(level=INFO, format='%(message)s')
 
-from todo import statusDict, parseTodoFile, statuskeyhelp
+from todo import statusDict, parseTodoFile, statusLegend
 
 
 def merge(filenames):
     "Iterate over files, parsing days, merging, sorting, uniquing"
 
+    debug("Merging %s" % filenames)
     # Accumulate all the (no doubt duplicated) tasks
     combinedList = []
     for filename in filenames:
@@ -60,7 +61,7 @@ def merge(filenames):
             print task.string(withDate=False, useColor=True)
 
     # And finally the key
-    print statuskeyhelp,
+    print statusLegend,
 
 
 def filesFromDirsAndNames(directory, names):
@@ -88,7 +89,7 @@ def filesFromDirsAndNames(directory, names):
 if __name__ == "__main__":
     import argparse
 
-    files_to_merge = ["today.txt", "~/txt/todo/today-glance3.txt"]
+    files_to_merge = ["today.txt"]
 
     parser = argparse.ArgumentParser(description='Merge some todo.txt files')
 
