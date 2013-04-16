@@ -2,7 +2,7 @@ Todo-o-matic
 ============
 
 Like Gina Trapani, I found myself returning to a simple "todo.txt"
-after each excurtion into a heavier-weight, more complicated task or
+after each excursion into a heavier-weight, more complicated task or
 project tracker (and my original todo.txt is probably older than she
 is :).
 
